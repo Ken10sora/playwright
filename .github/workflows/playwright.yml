@@ -1,0 +1,41 @@
+# .github/workflows/playwright.yml
+
+name: Playwright Tests
+# リポジトリにPushした際にjobs内のワークフローを実行
+on:
+  push:
+    branches: [ main, master ] 
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    # 実行時間が60分を超えた場合に停止
+    timeout-minutes: 60
+    # Ubuntuの最新版を環境として用意
+    runs-on: ubuntu-latest
+
+    steps:
+    # リポジトリのcheckout
+    - uses: actions/checkout@v4
+    # 最新版のNode.jsをインストール
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+
+      # 依存ライブラリのインストール
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # Playwrightでのテスト実行
+      - name: Run Playwright tests
+        run: npx playwright test
+      
+      # テスト結果のアップロード
+      - uses: actions/upload-artifact@v4
+        if: always() # 常にアップロード (失敗時のみにしたい場合はfailure() に書き換える)
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 30 # レポートの保持日数
